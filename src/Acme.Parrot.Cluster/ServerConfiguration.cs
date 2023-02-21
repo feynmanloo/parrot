@@ -27,7 +27,7 @@ public static class ServerConfiguration
             LowerElectionTimeout = 150,
             UpperElectionTimeout = 300,
             TransmissionBlockSize = 4096,
-            ColdStart = false,
+            ColdStart = true,
         };
         AddMembersToCluster(configuration.UseInMemoryConfigurationStorage());
         services.AddSingleton<InMemoryPersistentSateEngine>(new InMemoryPersistentSateEngine($"{DateTime.Now:yyyyMMddHHmmss}", new AppEventSource()));
@@ -52,13 +52,13 @@ public static class ServerConfiguration
     {
         var builder = storage.CreateActiveConfigurationBuilder();
 
-        var address = new IPEndPoint(IPAddress.Any, 8080);
+        var address = new IPEndPoint(IPAddress.Loopback, 8080);
         builder.Add(ClusterMemberId.FromEndPoint(address), address);
 
-        address = new(IPAddress.Any, 8081);
+        address = new(IPAddress.Loopback, 8081);
         builder.Add(ClusterMemberId.FromEndPoint(address), address);
 
-        address = new(IPAddress.Any, 8082);
+        address = new(IPAddress.Loopback, 8082);
         builder.Add(ClusterMemberId.FromEndPoint(address), address);
 
         builder.Build();
