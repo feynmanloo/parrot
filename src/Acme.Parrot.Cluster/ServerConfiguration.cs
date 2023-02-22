@@ -11,6 +11,10 @@ namespace Acme.Parrot.Cluster;
 
 public static class ServerConfiguration
 {
+    public static IServiceCollection UseRaftClusterServer(this IServiceCollection services, ClusterOptions options)
+    {
+        return UseRaftClusterServer(services, options.Host, options.Port);
+    }    
     public static IServiceCollection UseRaftClusterServer(this IServiceCollection services, string host, int port)
     {
         if (!IPAddress.TryParse(host, out var ipAddress))
@@ -21,7 +25,9 @@ public static class ServerConfiguration
                 throw new ArgumentNullException($"{host}解析IpAddress异常");
             }
         }
-        var configuration = new RaftCluster.TcpConfiguration(new IPEndPoint(ipAddress, port))
+
+        var ipEp = new IPEndPoint(ipAddress, port);
+        var configuration = new RaftCluster.TcpConfiguration(ipEp)
         {
             RequestTimeout = TimeSpan.FromMilliseconds(140),
             LowerElectionTimeout = 150,
@@ -30,7 +36,7 @@ public static class ServerConfiguration
             ColdStart = true,
         };
         AddMembersToCluster(configuration.UseInMemoryConfigurationStorage());
-        services.AddSingleton<InMemoryPersistentSateEngine>(new InMemoryPersistentSateEngine($"{DateTime.Now:yyyyMMddHHmmss}", new AppEventSource()));
+        services.AddSingleton<InMemoryPersistentSateEngine>(new InMemoryPersistentSateEngine($"{ipEp.Serialize()}", 50, InMemoryPersistentSateEngine.CreateOptions(new AppEventSource())));
         services.AddSingleton<ISupplier<BinlogState>>(sp => sp.GetRequiredService<InMemoryPersistentSateEngine>());
         services.AddSingleton<PersistentState>(sp => sp.GetRequiredService<InMemoryPersistentSateEngine>());
         services.AddSingleton<RaftCluster.NodeConfiguration>(sp =>

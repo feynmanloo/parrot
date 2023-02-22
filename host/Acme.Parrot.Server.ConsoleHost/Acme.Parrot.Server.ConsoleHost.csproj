@@ -14,6 +14,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\Acme.Parrot.Cluster\Acme.Parrot.Cluster.csproj" />
+      <ProjectReference Include="..\..\src\Acme.Parrot.MySqlCdc\Acme.Parrot.MySqlCdc.csproj" />
       <ProjectReference Include="..\..\src\Acme.Parrot.Server\Acme.Parrot.Server.csproj" />
     </ItemGroup>
 

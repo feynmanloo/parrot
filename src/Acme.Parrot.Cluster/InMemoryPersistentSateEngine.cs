@@ -8,12 +8,7 @@ namespace Acme.Parrot.Cluster;
 public class InMemoryPersistentSateEngine : MemoryBasedStateMachine, ISupplier<BinlogState>
 {
     private BinlogState? content = null;
-    
-    public InMemoryPersistentSateEngine(string path, AppEventSource source)
-        : base(path, 50, CreateOptions(source))
-    {
-    }
-    
+
     public InMemoryPersistentSateEngine(DirectoryInfo path, int recordsPerPartition, Options? configuration = null) : base(path, recordsPerPartition, configuration)
     {
     }
@@ -24,8 +19,8 @@ public class InMemoryPersistentSateEngine : MemoryBasedStateMachine, ISupplier<B
 
     private async ValueTask UpdateValue(LogEntry entry)
     {
-        var value = (BinlogState)(await entry.DeserializeFromJsonAsync())!;
-        Console.WriteLine($"Accepting value {value.FileName}-{value.Position}");
+       content = (BinlogState)(await entry.DeserializeFromJsonAsync())!;
+        Console.WriteLine($"Accepting value {content.FileName}-{content.Position}");
     }
 
     protected override ValueTask ApplyAsync(LogEntry entry)
@@ -42,7 +37,7 @@ public class InMemoryPersistentSateEngine : MemoryBasedStateMachine, ISupplier<B
         return content ?? new BinlogState();
     }
     
-    private static Options CreateOptions(AppEventSource source)
+    public static Options CreateOptions(AppEventSource source)
     {
         var result = new Options
         {

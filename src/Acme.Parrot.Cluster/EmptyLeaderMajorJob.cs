@@ -4,10 +4,10 @@ namespace Acme.Parrot.Cluster;
 
 public class EmptyLeaderMajorJob: ILeaderMajorJob
 {
-    public ValueTask<BinlogState> ExecuteAsync(BinlogState arg, CancellationToken cancellationToken)
+    public async ValueTask ExecuteAsync(BinlogState lastState, Action<BinlogState> updateBinlogStateAction, CancellationToken cancellationToken)
     {
-        arg.FileName = $"{DateTime.Now:yyyyMMddHHmmss}";
-        arg.Position = DateTime.Now.Ticks;
-        return ValueTask.FromResult(arg);
+        lastState.FileName = $"{DateTime.Now:yyyyMMddHHmmss}";
+        lastState.Position ++;
+        updateBinlogStateAction.Invoke(lastState);
     }
 }

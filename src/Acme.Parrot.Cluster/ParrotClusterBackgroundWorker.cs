@@ -39,18 +39,35 @@ public class ParrotClusterBackgroundWorker: BackgroundService
                 var source = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, leadershipToken);
                 try
                 {
-                    var arg = _supplier.Invoke();
-                    var data = await _majorJob.ExecuteAsync(arg, source.Token);
-                    var entry = _persistentState.CreateJsonLogEntry(data);
-                    await _cluster.ReplicateAsync(entry, source.Token);
+                    var lastBinlogState = _supplier.Invoke();
+                    await _majorJob.ExecuteAsync(lastBinlogState, async currentBinlogState =>
+                    {
+                        try
+                        {
+                            if (!_cluster.LeadershipToken.IsCancellationRequested)
+                            {
+                                var entry = _persistentState.CreateJsonLogEntry(currentBinlogState);
+                                _logger.LogInformation($"发布消息");
+                                await _cluster.ReplicateAsync(entry, source.Token);
+                            }
+                        }
+                        catch (OperationCanceledException operationCanceledException)
+                        {
+                    
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError("Unexpected error {0}", e);
+                        }
+                    }, source.Token);
+                }
+                catch (OperationCanceledException operationCanceledException)
+                {
+                    
                 }
                 catch (Exception e)
                 {
                     _logger.LogError("Unexpected error {0}", e);
-                }
-                finally
-                {
-                    source?.Dispose();
                 }
             }
         }
